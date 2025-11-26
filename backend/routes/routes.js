@@ -53,29 +53,30 @@ const { User } = require('../models');
 
 /**
  * @swagger
- * /api/register:
+ * /register:
  *   post:
- *     summary: Crear perfil de usuario
- *     tags: [Usuario]
+ *     summary: Crear un nuevo usuario
+ *     tags: [usuarios]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/x-www-form-urlencoded:
  *           schema:
- *             $ref: '#/components/schemas/UserCreate'
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 description: Nombre de usuario
+ *               correo:
+ *                 type: string
+ *                 description: Correo electrónico
+ *               password:
+ *                 type: string
+ *                 description: Contraseña
  *     responses:
  *       201:
  *         description: Usuario creado exitosamente
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 message:
- *                   type: string
- *       400:
+ *       409:
  *         description: El usuario ya existe
  *       500:
  *         description: Error interno del servidor
@@ -101,12 +102,12 @@ router.get('/users', async (req, res) => {
 // Registro de usuario
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { nombre, correo, password } = req.body;
         
         // Verificar si el usuario ya existe
-        const existingUser = await User.findOne({ where: { email } });
+        const existingUser = await User.findOne({ where: { correo } });
         if (existingUser) {
-            return res.status(400).json({ error: 'El usuario ya existe' });
+            return res.status(409).json({ error: 'El usuario ya existe' });
         }
         
         // Hash del password
@@ -114,16 +115,16 @@ router.post('/register', async (req, res) => {
         
         // Crear usuario
         const user = await User.create({
-            name,
-            email,
+            nombre,
+            correo,
             password: hashedPassword
         });
         
         // Respuesta sin password
         const userResponse = {
             id: user.id,
-            name: user.name,
-            email: user.email,
+            nombre: user.nombre,
+            correo: user.correo,
             isActive: user.isActive
         };
         
