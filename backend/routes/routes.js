@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, Publicacion } = require('../models');
+const publicacionController = require('../controllers/publicacionController');
 
 /**
  * @swagger
@@ -78,6 +79,39 @@ const { User } = require('../models');
  *         description: Usuario creado exitosamente
  *       409:
  *         description: El usuario ya existe
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+/**
+ * @swagger
+ * /publicaciones:
+ *   post:
+ *     summary: Crear una nueva publicación
+ *     tags: [publicaciones]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titulo:
+ *                 type: string
+ *                 description: Título de la publicación
+ *               contenido:
+ *                 type: string
+ *                 description: Contenido de la publicación
+ *               idUser:
+ *                 type: integer
+ *                 description: ID del usuario autor
+ *     responses:
+ *       201:
+ *         description: Publicación creada exitosamente
+ *       404:
+ *         description: Usuario no encontrado
+ *       409:
+ *         description: Ya existe una publicación con ese título para este usuario
  *       500:
  *         description: Error interno del servidor
  */
@@ -171,5 +205,8 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Crear nueva publicación
+router.post('/publicaciones', publicacionController.crearPublicacion);
 
 module.exports = router;
