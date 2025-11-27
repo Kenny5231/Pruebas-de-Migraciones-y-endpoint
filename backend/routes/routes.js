@@ -2,7 +2,119 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, Publicacion } = require('../models');
+const publicacionController = require('../controllers/publicacionController');
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         isActive:
+ *           type: boolean
+ *     UserCreate:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *       properties:
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Obtener todos los usuarios
+ *     tags: [Usuario]
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
+
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: Crear un nuevo usuario
+ *     tags: [usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 description: Nombre de usuario
+ *               correo:
+ *                 type: string
+ *                 description: Correo electrónico
+ *               password:
+ *                 type: string
+ *                 description: Contraseña
+ *     responses:
+ *       201:
+ *         description: Usuario creado exitosamente
+ *       409:
+ *         description: El usuario ya existe
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+/**
+ * @swagger
+ * /publicaciones:
+ *   post:
+ *     summary: Crear una nueva publicación
+ *     tags: [publicaciones]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               titulo:
+ *                 type: string
+ *                 description: Título de la publicación
+ *               contenido:
+ *                 type: string
+ *                 description: Contenido de la publicación
+ *               idUser:
+ *                 type: integer
+ *                 description: ID del usuario autor
+ *     responses:
+ *       201:
+ *         description: Publicación creada exitosamente
+ *       404:
+ *         description: Usuario no encontrado
+ *       409:
+ *         description: Ya existe una publicación con ese título para este usuario
+ *       500:
+ *         description: Error interno del servidor
+ */
 
 //Prueba
 router.get('/test', (req, res) => {
@@ -24,12 +136,12 @@ router.get('/users', async (req, res) => {
 // Registro de usuario
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { nombre, correo, password } = req.body;
         
         // Verificar si el usuario ya existe
-        const existingUser = await User.findOne({ where: { email } });
+        const existingUser = await User.findOne({ where: { correo } });
         if (existingUser) {
-            return res.status(400).json({ error: 'El usuario ya existe' });
+            return res.status(409).json({ error: 'El usuario ya existe' });
         }
         
         // Hash del password
@@ -37,16 +149,16 @@ router.post('/register', async (req, res) => {
         
         // Crear usuario
         const user = await User.create({
-            name,
-            email,
+            nombre,
+            correo,
             password: hashedPassword
         });
         
         // Respuesta sin password
         const userResponse = {
             id: user.id,
-            name: user.name,
-            email: user.email,
+            nombre: user.nombre,
+            correo: user.correo,
             isActive: user.isActive
         };
         
@@ -93,5 +205,8 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Crear nueva publicación
+router.post('/publicaciones', publicacionController.crearPublicacion);
 
 module.exports = router;
